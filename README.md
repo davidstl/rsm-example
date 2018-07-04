@@ -8,4 +8,4 @@
 * Install VSCode
 
 ### Contribution guidelines ###
-* Do good work.
+* Do good work
