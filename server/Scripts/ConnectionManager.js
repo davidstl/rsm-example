@@ -1,7 +1,10 @@
 var Connection = require('./Connection.js');
-var TurnBased = require('./TurnBased.js');
 var log4js = require('log4js');
 var logger = log4js.getLogger('main');
+
+//i'd like to remove these
+var TurnBasedRS = require('./TurnBasedRoomServer');
+var RelayRS = require('./RelayRoomServer');
 
 var connections = {};
 
@@ -21,5 +24,6 @@ exports.removeConnection = function(socket)
     socket.destroy();
 
     logger.info("Removed connection: " + connectionId);
-    TurnBased.onUserDisconnected(connection);
+    TurnBasedRS.onUserDisconnected(connection);
+    RelayRS.onUserDisconnected(connection);
 }

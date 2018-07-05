@@ -1,8 +1,12 @@
 var Connection = require('./Connection.js');
-var Game = require('./CustomerCode/Game.js');
-var TurnBased = require('./TurnBased.js');
 var log4js = require('log4js');
 var logger = log4js.getLogger('main');
+
+// TurnBased
+var TurnBasedRS = require('./TurnBasedRoomServer');
+var Game = require('./CustomerCode/Game.js');
+// Relay
+var RelayRS = require('./RelayRoomServer');
 
 var INSTANCE_MANAGER_SECRET_TOKEN = "SuperSecretToken";
 
@@ -29,7 +33,7 @@ function createInstance(instanceId, lobby)
         instance._ready = true
         if (exports.isAllConnected(instance))
         {
-            TurnBased.startMatch(instance);
+            TurnBasedRS.startMatch(instance);
         }
     });
 

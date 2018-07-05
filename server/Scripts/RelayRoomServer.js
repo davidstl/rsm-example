@@ -1,15 +1,15 @@
 var Connection = require('./Connection.js');
 var ConnectionManager = require('./ConnectionManager.js');
-var InstanceManager = require('./InstanceManager.js');
+var RoomServerManager = require('./RoomServerManager');
 var log4js = require('log4js');
 var logger = log4js.getLogger('main');
 
-var TURNBASED_OP_CONNECT = "CONNECT";
-var TURNBASED_OP_SUBMIT_TURN = "SUBMIT_TURN";
+var RELAY_ROOM_OP_CONNECT = "CONNECT";
+var RELAY_OP_SUBMIT_TURN = "SEND_EVENT";
 
 exports.onRecv = function(connection, message)
 {
-    var instance = InstanceManager.get(message.instanceId);
+    var instance = RoomServerManager.get(message.instanceId);
     if (!instance)
     {
         logger.error("Game instance not found: " + message.instanceId);
@@ -25,21 +25,20 @@ exports.onRecv = function(connection, message)
 
     switch (message.op)
     {
-        case TURNBASED_OP_CONNECT:
-            if (!InstanceManager.connect(instance, message.userId))
+        case RELAY_ROOM_OP_CONNECT:
+            if (!RoomServerManager.connect(instance, message.userId))
             {
                 return false;
             }
             connection.instance = instance;
             user._connection = connection;
-            if (instance._ready && InstanceManager.isAllConnected(instance))
+            if (instance._ready && RoomServerManager.isAllConnected(instance))
             {
                 exports.startMatch(instance);
             }
             return true;
-        case TURNBASED_OP_SUBMIT_TURN:
-            var gameState = instance._game.onSubmitTurn(user, message.data);
-            handleGameState(instance, gameState);
+        case RELAY_OP_SUBMIT_TURN:
+            handleGameState(instance.lobby, message);
             return true;
         default:
             logger.error("Invalid op: " + message.op);
@@ -132,11 +131,8 @@ function handleGameState(instance, gameState)
     gameState.event = "GAME_STATE";
     broadcastToLobby(instance._lobby, gameState);
 
-    if (gameState.winners || gameState.close)
+    if (gameState.close)
     {
-        // Looks like the game is finished!
-        // ... tell stuff to BrainCloud
-        disconnectLobby(instance._lobby)
-        InstanceManager.destroy(instance);
+        RoomServerManager.destroy(instance);
     }
 }
