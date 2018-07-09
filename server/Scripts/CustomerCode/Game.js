@@ -36,7 +36,7 @@ module.exports = class Game
         this.serializePlayer = function(player)
         {
             var ret = {
-                id: player.id,
+                id: player.profileId,
                 hp: player._hp,
                 hpCap: player._hpCap,
                 energy: player._energy,
@@ -52,7 +52,7 @@ module.exports = class Game
         this.serialize = function()
         {
             var ret = {
-                turn: this._currentPlayer.id,
+                turn: this._currentPlayer.profileId,
                 data: {
                     player1: this.serializePlayer(this._player1),
                     player2: this.serializePlayer(this._player2)
@@ -169,8 +169,8 @@ module.exports = class Game
             game._config.PlayerHPStart += deckConfig.PlayerHPBonus;
 
             // Proceed to create players and decks and such
-            game._player1 = game.createPlayer(game._lobby.teams[0].users[0], deckConfig);
-            game._player2 = game.createPlayer(game._lobby.teams[1].users[0], deckConfig);
+            game._player1 = game.createPlayer(game._lobby.members[0], deckConfig);
+            game._player2 = game.createPlayer(game._lobby.members[1], deckConfig);
             
             delete game._config.decks;
 
@@ -198,7 +198,7 @@ module.exports = class Game
     onSubmitTurn(user, data)
     {
         // Lot of error checking here... because cheaters
-        if (this._currentPlayer.id != user.id)
+        if (this._currentPlayer.profileId != user.profileId)
         {
             return {close: "wrong player"};
         }
@@ -433,7 +433,7 @@ module.exports = class Game
 
         var ret = this.serialize();
         ret.data.previousTurn = {
-            userId: user.id,
+            userId: user.profileId,
             action: data.action
         }
 
@@ -443,11 +443,11 @@ module.exports = class Game
         }
         else if (this._player1._hp <= 0)
         {
-            ret.winners = [this._player2.id];
+            ret.winners = [this._player2.profileId];
         }
         else if (this._player2._hp <= 0)
         {
-            ret.winners = [this._player1.id];
+            ret.winners = [this._player1.profileId];
         }
 
         return ret;
@@ -456,7 +456,7 @@ module.exports = class Game
     onLeave(user)
     {
         var ret = this.serialize();
-        ret.close = user.id + " disconneted";
+        ret.close = user.profileId + " disconneted";
         return ret;
     }
 }
@@ -464,21 +464,21 @@ module.exports = class Game
 function S2SRequest(json, callback)
 {
     // fetch configs from braincloud
-    json.gameId = "11817";
+    json.gameId = "22819";
     json.serverName = "GameInstance";
-    json.gameSecret = "07618fa6-a4fe-4240-8d46-5714959573de";
+    json.gameSecret = "7d147b40-3ae2-4f8c-9ce4-9cc930515802";
 
     var postData = JSON.stringify(json);
 
     console.log("[S2S SEND] " + postData);
 
     var options = {
-        host: 'sharedprod.braincloudservers.com',
+        host: 'internal.braincloudservers.com',
         path: '/s2sdispatcher',
         method: 'POST',
         headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': postData.length
+            'Content-Type': 'application/json',
+            'Content-Length': postData.length
         }
     };
 

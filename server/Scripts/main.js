@@ -63,10 +63,11 @@ function readPOSTData(request, callback)
 app.post('/bcrsm/room-assign', (request, res) => readPOSTData(request, data =>
 {
     let roomData = JSON.parse(data);
-    // RoomServerManager.create(roomData); // Create WarStone or Relay with roomData in argument?. something something
+
+    require('./RoomServerManager.js').createRoomInstance(roomData.id, roomData);
 
     res.writeHead(200, {'Content-Type': 'text/plain'});
-    res.write(`{"url":"http://207.219.200.99","port":"9208","roomId":"${roomData.id}"}`);
+    res.write(`{"url":"207.219.200.99","port":"${TCP_PORT}","roomId":"${roomData.id}"}`);
     res.end();
 }));
 

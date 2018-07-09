@@ -13,6 +13,7 @@ exports.dispatch = function(connection, message)
         case "Relay":
             return RelayRS.onRecv(connection, message);
         default:
+            logger.error("Bad service: " + message.service);
             return false;
     }
 }

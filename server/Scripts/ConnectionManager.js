@@ -23,7 +23,7 @@ exports.removeConnection = function(socket)
     delete connections[connectionId];
     socket.destroy();
 
-    logger.info("Removed connection: " + connectionId);
+    logger.info("Removed connection: " + connectionId + ", stack: " + new Error().stack);
     TurnBasedRS.onUserDisconnected(connection);
     RelayRS.onUserDisconnected(connection);
 }

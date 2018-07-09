@@ -68,6 +68,7 @@ function Connection_onLine(connection, line)
     var message = JSON.parse(line);
     if (!message)
     {
+        logger.error("Bad json: " + message);
         ConnectionManager.removeConnection(connection._socket);
         return;
     }

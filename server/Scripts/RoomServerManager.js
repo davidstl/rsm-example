@@ -14,6 +14,11 @@ var INSTANCE_MANAGER_OP_CREATE = "CREATE";
 
 var instances = {};
 
+exports.createRoomInstance = function(instanceId, lobby)
+{
+    return createInstance(instanceId, lobby);
+}
+
 function createInstance(instanceId, lobby)
 {
     if (!instanceId) return false;
@@ -50,46 +55,28 @@ exports.get = function(instanceId)
 
 exports.connect = function(instance, userId)
 {
-    var user = null;
-    var found = false;
-
-    for (var i = 0; i < instance._lobby.teams.length; ++i)
+    for (var i = 0; i < instance._lobby.members.length; ++i)
     {
-        var team = instance._lobby.teams[i];
-        for (var j = 0; j < team.users.length; ++j)
+        var user = instance._lobby.members[i];
+        if (user.profileId === userId)
         {
-            var user = team.users[j];
-            if (user.id == userId)
+            if (!user.isConnected)
             {
-                if (!user.isConnected)
-                {
-                    user.isConnected = true;
-                    return true;
-                }
-                return false; // Already connected
+                user.isConnected = true;
+                return true;
             }
+            logger.error("Already connected: " + userId);
+            return false; // Already connected
         }
     }
 
+    logger.error("User not part of room: " + instance._lobby.id + ", for user: " + userId);
     return false; // Didn't find it
 }
 
 exports.isAllConnected = function(instance)
 {
-    for (var i = 0; i < instance._lobby.teams.length; ++i)
-    {
-        var team = instance._lobby.teams[i];
-        for (var j = 0; j < team.users.length; ++j)
-        {
-            var user = team.users[j];
-            if (!user.isConnected)
-            {
-                return false;
-            }
-        }
-    }
-
-    return true;
+    return instance._lobby.members.every(member => member.isConnected);
 }
 
 exports.destroy = function(instance)
@@ -97,33 +84,5 @@ exports.destroy = function(instance)
     if (instance.hasOwnProperty(instance._id))
     {
         delete instance[instance._id];
-    }
-}
-
-exports.onRecv = function(connection, message)
-{
-    // Validate that it comes from RTT services    
-    if (message.token != INSTANCE_MANAGER_SECRET_TOKEN)
-    {
-        return false;
-    }
-
-    switch (message.op)
-    {
-        case INSTANCE_MANAGER_OP_CREATE:
-            var instance = createInstance(message.instanceId, message.lobby);
-            if (instance)
-            {
-                var response = {
-                    service: message.service,
-                    op: message.op,
-                    status: 200
-                };
-                Connection.send(connection, response);
-                return true;
-            }
-            return false;
-        default:
-            return false;
     }
 }

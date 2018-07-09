@@ -68,62 +68,22 @@ exports.startMatch = function(instance)
 
 function findUserByConnection(lobby, connection)
 {
-    for (var i = 0; i < lobby.teams.length; ++i)
-    {
-        var team = lobby.teams[i];
-        for (var j = 0; j < team.users.length; ++j)
-        {
-            var user = team.users[j];
-            if (user._connection == connection)
-            {
-                return user;
-            }
-        }
-    }
-    return null;
+    return lobby.members.find(member => member._connection == connection);
 }
 
 function findUserInLobby(lobby, userId)
 {
-    for (var i = 0; i < lobby.teams.length; ++i)
-    {
-        var team = lobby.teams[i];
-        for (var j = 0; j < team.users.length; ++j)
-        {
-            var user = team.users[j];
-            if (user.id == userId)
-            {
-                return user;
-            }
-        }
-    }
-    return null;
+    return lobby.members.find(member => member.profileId == userId);
 }
 
 function broadcastToLobby(lobby, message)
 {
-    for (var i = 0; i < lobby.teams.length; ++i)
-    {
-        var team = lobby.teams[i];
-        for (var j = 0; j < team.users.length; ++j)
-        {
-            var user = team.users[j];
-            Connection.send(user._connection, message);
-        }
-    }
+    lobby.members.forEach(member => Connection.send(member._connection, message));
 }
 
 function disconnectLobby(lobby)
 {
-    for (var i = 0; i < lobby.teams.length; ++i)
-    {
-        var team = lobby.teams[i];
-        for (var j = 0; j < team.users.length; ++j)
-        {
-            var user = team.users[j];
-            ConnectionManager.removeConnection(user._connection._socket);
-        }
-    }
+    lobby.members.forEach(member => ConnectionManager.removeConnection(user._connection._socket));
 }
 
 function handleGameState(instance, gameState)
