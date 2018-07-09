@@ -83,7 +83,10 @@ function broadcastToLobby(lobby, message)
 
 function disconnectLobby(lobby)
 {
-    lobby.members.forEach(member => ConnectionManager.removeConnection(member._connection._socket));
+    lobby.members.forEach(member =>
+    {
+        if (member._connection) ConnectionManager.removeConnection(member._connection._socket);
+    });
 }
 
 function handleGameState(instance, gameState)
