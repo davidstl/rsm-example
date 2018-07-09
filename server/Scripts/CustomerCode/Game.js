@@ -37,6 +37,7 @@ module.exports = class Game
         {
             var ret = {
                 id: player.profileId,
+                name: player.name,
                 hp: player._hp,
                 hpCap: player._hpCap,
                 energy: player._energy,
@@ -52,10 +53,10 @@ module.exports = class Game
         this.serialize = function()
         {
             var ret = {
-                turn: this._currentPlayer.profileId,
+                turn: this._currentPlayer ? this._currentPlayer.profileId : null,
                 data: {
-                    player1: this.serializePlayer(this._player1),
-                    player2: this.serializePlayer(this._player2)
+                    player1: this._player1 ? this.serializePlayer(this._player1) : null,
+                    player2: this._player2 ? this.serializePlayer(this._player2) : null
                 }
             };
 
@@ -81,14 +82,20 @@ module.exports = class Game
             player.discarded = [];
             player.board = [];
 
-            var uniqueId = 0;
+            let deckArr = [];
             for (var cardId in deckConfig.Deck)
             {
-                var count = deckConfig.Deck[cardId];
-                for (var i = 0; i < count; ++i)
+                deckArr.push({id: cardId, count: deckConfig.Deck[cardId]});
+            }
+            deckArr.sort((a, b) => a.id < b.id);
+            deckConfig.DeckArr = deckArr;
+
+            var uniqueId = 0;
+            deckArr.forEach(deckCard =>
+            {
+                for (var i = 0; i < deckCard.count; ++i)
                 {
-                    var cardType = this._config.cards[cardId];
-                    cardType.id = cardId;
+                    var cardType = this._config.cards[deckCard.id];
                     var card = {
                         _id: uniqueId++,
                         _type: cardType,
@@ -96,7 +103,7 @@ module.exports = class Game
                     };
                     player.deck.push(card);
                 }
-            }
+            });
 
             // Shuffle the deck
             this.shuffle(player.deck);
@@ -171,6 +178,8 @@ module.exports = class Game
             // Proceed to create players and decks and such
             game._player1 = game.createPlayer(game._lobby.members[0], deckConfig);
             game._player2 = game.createPlayer(game._lobby.members[1], deckConfig);
+
+            game._config.deckArr = deckConfig.DeckArr;
             
             delete game._config.decks;
 
@@ -271,7 +280,7 @@ module.exports = class Game
                 }
                 if (this._currentPlayer._energy < card._type.Cost)
                 {
-                    return {close: "not enough energy to play this card"};
+                    return {close: "not enough energy to play this card. player: " + this._currentPlayer._energy + ", card: " + JSON.stringify(card)};
                 }
                 if (this._currentPlayer.board.length >= this._config.MaxOnBoard)
                 {
@@ -287,61 +296,69 @@ module.exports = class Game
             }
             case "attack":
             {
-                var attackerCard = null;
-                var attackerBoardIndex = -1;
-                var defenderCard = null;
-                var defenderBoardIndex = -1;
-                for (var i = 0; i < this._currentPlayer.board.length; ++i)
+                try
                 {
-                    var boardCard = this._currentPlayer.board[i];
-                    if (boardCard._id == action.cardId)
+                    var attackerCard = null;
+                    var attackerBoardIndex = -1;
+                    var defenderCard = null;
+                    var defenderBoardIndex = -1;
+                    for (var i = 0; i < this._currentPlayer.board.length; ++i)
                     {
-                        attackerCard = boardCard;
-                        attackerBoardIndex = i;
-                        break;
+                        var boardCard = this._currentPlayer.board[i];
+                        if (boardCard._id == action.cardId)
+                        {
+                            attackerCard = boardCard;
+                            attackerBoardIndex = i;
+                            break;
+                        }
+                    }
+                    var opponentPlayer = (this._currentPlayer == this._player1) ? this._player2 : this._player1;
+                    for (var i = 0; i < opponentPlayer.board.length; ++i)
+                    {
+                        var boardCard = opponentPlayer.board[i];
+                        if (boardCard._id == action.targetCardId)
+                        {
+                            defenderCard = boardCard;
+                            defenderBoardIndex = i;
+                            break;
+                        }
+                    }
+
+                    if (!attackerCard)
+                    {
+                        return {close: "invalid attacker card id or card not on board"};
+                    }
+                    if (this._currentPlayer.moved.includes(attackerCard))
+                    {
+                        return {close: "attacker card already attacked or was placed this turn"};
+                    }
+                    if (!defenderCard)
+                    {
+                        return {close: "invalid defender card id or card not on board"};
+                    }
+
+                    this._currentPlayer.moved.push(attackerCard);
+
+                    // Battle!
+                    var attackerMultiplier = this._config.suits[attackerCard._type.Suit][defenderCard._type.Suit];
+                    var defenderMultiplier = this._config.suits[defenderCard._type.Suit][attackerCard._type.Suit];
+                    defenderCard._hp = Math.max(0, defenderCard._hp - Math.floor(attackerCard._type.Attack * attackerMultiplier));
+                    attackerCard._hp = Math.max(0, attackerCard._hp - Math.floor(defenderCard._type.Attack * defenderMultiplier));
+
+                    // Destroy cards
+                    if (attackerCard._hp == 0)
+                    {
+                        this._currentPlayer.discarded.push(this._currentPlayer.board.splice(attackerBoardIndex, 1)[0]);
+                    }
+                    if (defenderCard._hp == 0)
+                    {
+                        opponentPlayer.discarded.push(opponentPlayer.board.splice(defenderBoardIndex, 1)[0]);
                     }
                 }
-                var opponentPlayer = (this._currentPlayer == this._player1) ? this._player2 : this._player1;
-                for (var i = 0; i < opponentPlayer.board.length; ++i)
+                catch (e)
                 {
-                    var boardCard = opponentPlayer.board[i];
-                    if (boardCard._id == action.targetCardId)
-                    {
-                        defenderCard = boardCard;
-                        defenderBoardIndex = i;
-                        break;
-                    }
-                }
-
-                if (!attackerCard)
-                {
-                    return {close: "invalid attacker card id or card not on board"};
-                }
-                if (this._currentPlayer.moved.includes(attackerCard))
-                {
-                    return {close: "attacker card already attacked or was placed this turn"};
-                }
-                if (!defenderCard)
-                {
-                    return {close: "invalid defender card id or card not on board"};
-                }
-
-                this._currentPlayer.moved.push(attackerCard);
-
-                // Battle!
-                var attackerMultiplier = this._config.suits[attackerCard._type.Suit][defenderCard._type.Suit];
-                var defenderMultiplier = this._config.suits[defenderCard._type.Suit][attackerCard._type.Suit];
-                defenderCard._hp = Math.max(0, defenderCard._hp - Math.floor(attackerCard._type.Attack * attackerMultiplier));
-                attackerCard._hp = Math.max(0, attackerCard._hp - Math.floor(defenderCard._type.Attack * defenderMultiplier));
-
-                // Destroy cards
-                if (attackerCard._hp == 0)
-                {
-                    this._currentPlayer.discarded.push(this._currentPlayer.board.splice(attackerBoardIndex, 1)[0]);
-                }
-                if (defenderCard._hp == 0)
-                {
-                    opponentPlayer.discarded.push(opponentPlayer.board.splice(defenderBoardIndex, 1)[0]);
+                    console.log(e + ", " + e.stack);
+                    return {close: "invalid move"};
                 }
                 break;
             }

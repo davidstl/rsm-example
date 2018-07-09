@@ -89,6 +89,11 @@ logger.info("TCP server listning on port " + TCP_PORT);
 // Receive connections
 server.on('connection', function(socket)
 {
+    if (!socket)
+    {
+        logger.error("connection with undefined socket!");
+        return;
+    }
 	try
 	{
 		logger.info("Received connection - " + socket.remoteAddress + ":" + socket.remotePort);

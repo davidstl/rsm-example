@@ -25,5 +25,5 @@ exports.removeConnection = function(socket)
 
     logger.info("Removed connection: " + connectionId + ", stack: " + new Error().stack);
     TurnBasedRS.onUserDisconnected(connection);
-    RelayRS.onUserDisconnected(connection);
+    // RelayRS.onUserDisconnected(connection);
 }
