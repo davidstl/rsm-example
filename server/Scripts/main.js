@@ -1,6 +1,8 @@
 // Imports
 var net = require('net');
 var log4js = require('log4js');
+var RoomServerManager = require('./RoomServerManager.js')
+var ConnectionManager = require('./ConnectionManager.js');
 
 log4js.configure({
 	appenders: {
@@ -13,8 +15,6 @@ log4js.configure({
 });
 
 var logger = log4js.getLogger('main');
-
-var ConnectionManager = require('./ConnectionManager.js');
 
 // Constants
 var HTTP_PORT = 9306;
@@ -62,12 +62,18 @@ function readPOSTData(request, callback)
 
 app.post('/bcrsm/room-assign', (request, res) => readPOSTData(request, data =>
 {
-    let roomData = JSON.parse(data);
+    let room = JSON.parse(data);
 
-    require('./RoomServerManager.js').createRoomInstance(roomData.id, roomData);
+    if (!RoomServerManager.createRoomServer(room))
+    {
+        res.writeHead(400, {'Content-Type': 'text/plain'});
+        res.write(`bad request`);
+        res.end();
+        return;
+    }
 
     res.writeHead(200, {'Content-Type': 'text/plain'});
-    res.write(`{"url":"207.219.200.99","port":"${TCP_PORT}","roomId":"${roomData.id}"}`);
+    res.write(`{"url":"207.219.200.99","port":"${TCP_PORT}","roomId":"${room.id}"}`);
     res.end();
 }));
 
@@ -97,7 +103,7 @@ server.on('connection', function(socket)
 	try
 	{
 		logger.info("Received connection - " + socket.remoteAddress + ":" + socket.remotePort);
-		ConnectionManager.createConnection(socket);
+        ConnectionManager.createConnection(socket);
 	}
 	catch (e)
 	{

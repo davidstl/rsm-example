@@ -1,110 +1,98 @@
-var Connection = require('./Connection.js');
+var RoomServer = require('./RoomServer.js');
 var ConnectionManager = require('./ConnectionManager.js');
-var RoomServerManager = require('./RoomServerManager');
+var RoomServerManager = require('./RoomServerManager.js');
 var log4js = require('log4js');
 var logger = log4js.getLogger('main');
 
-var TURNBASED_OP_CONNECT = "CONNECT";
-var TURNBASED_OP_SUBMIT_TURN = "SUBMIT_TURN";
-
-exports.onRecv = function(connection, message)
+module.exports = class TurnBasedRoomServer extends RoomServer
 {
-    var instance = RoomServerManager.get(message.instanceId);
-    if (!instance)
+    constructor(room, gameName)
     {
-        logger.error("Game instance not found: " + message.instanceId);
-        return false;
+        super(room);
+
+        var Game = require(`./Games/${gameName}.js`)
+        this.game = new Game();
     }
 
-    var user = findUserInLobby(instance._lobby, message.userId);
-    if (!user)
+    onMemberConnected(member)
     {
-        logger.error("User not found " + message.userId + " instance " + instance._id);
-        return false;
+        super.onMemberConnected(member);
+        
+        if (this.isAllConnected())
+        {
+            this.startMatch();
+        }
     }
 
-    switch (message.op)
+    onMemberDisconnected(member)
     {
-        case TURNBASED_OP_CONNECT:
-            if (!RoomServerManager.connect(instance, message.userId))
-            {
+        super.onMemberDisconnected(member);
+
+        var gameState = this.game.onLeave(member);
+        this.handleGameState(gameState);
+    }
+
+    startMatch()
+    {
+        this.game.init(this.room, () =>
+        {
+            let gameState = this.game.onStart();
+            this.handleGameState(gameState);
+        });
+    }
+
+    onRecv(member, message)
+    {
+        if (super.onRecv(member, message)) return true;
+
+        switch (message.op)
+        {
+            case "SUBMIT_TURN":
+                var gameState = this.game.onSubmitTurn(member, message.data);
+                this.handleGameState(gameState);
+                return true;
+            default:
+                logger.error("Invalid op: " + message.op);
                 return false;
-            }
-            connection.instance = instance;
-            user._connection = connection;
-            if (instance._ready && RoomServerManager.isAllConnected(instance))
+        }
+    }
+
+    handleGameState(gameState)
+    {
+        // Send
+        gameState.event = "GAME_STATE";
+        this.broadcastToRoom(gameState);
+    
+        if (gameState.winners || gameState.close)
+        {
+            if (gameState.close)
             {
-                exports.startMatch(instance);
+                logger.error("close requested: " + gameState.close);
             }
-            return true;
-        case TURNBASED_OP_SUBMIT_TURN:
-            var gameState = instance._game.onSubmitTurn(user, message.data);
-            handleGameState(instance, gameState);
-            return true;
-        default:
-            logger.error("Invalid op: " + message.op);
-            return false;
-    }
-}
-
-exports.onUserDisconnected = function(connection)
-{
-    if (connection.instance)
-    {
-        var user = findUserByConnection(connection.instance._lobby, connection)
-        if (user)
-        {
-            var gameState = connection.instance._game.onLeave(user);
-            handleGameState(connection.instance, gameState);
+    
+            // Looks like the game is finished!
+            // ... tell stuff to BrainCloud
+            this.shutdown();
         }
     }
-}
 
-exports.startMatch = function(instance)
-{
-    var gameState = instance._game.onStart();
-    handleGameState(instance, gameState);
-}
-
-function findUserByConnection(lobby, connection)
-{
-    return lobby.members.find(member => member._connection == connection);
-}
-
-function findUserInLobby(lobby, userId)
-{
-    return lobby.members.find(member => member.profileId == userId);
-}
-
-function broadcastToLobby(lobby, message)
-{
-    lobby.members.forEach(member => Connection.send(member._connection, message));
-}
-
-function disconnectLobby(lobby)
-{
-    lobby.members.forEach(member =>
+    shutdown()
     {
-        if (member._connection) ConnectionManager.removeConnection(member._connection._socket);
-    });
-}
-
-function handleGameState(instance, gameState)
-{
-    // Send
-    gameState.event = "GAME_STATE";
-    broadcastToLobby(instance._lobby, gameState);
-
-    if (gameState.winners || gameState.close)
-    {
-        if (gameState.close)
+        this.room.members.forEach(member =>
         {
-            logger.error("close requested: " + gameState.close);
-        }
+            ConnectionManager.removeConnection(member.connection);
+        });
+        RoomServerManager.removeRoomServer(this);
+    }
 
-        // Looks like the game is finished!
-        // ... tell stuff to BrainCloud
-        disconnectLobby(instance._lobby)
-        RoomServerManager.destroy(instance);
+    broadcastToRoom(message)
+    {
+        this.room.members.forEach(member =>
+        {
+            if (member.connection)
+            {
+                member.connection.send(message);
+            }
+        });
     }
 }

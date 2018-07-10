@@ -2,28 +2,43 @@ var Connection = require('./Connection.js');
 var log4js = require('log4js');
 var logger = log4js.getLogger('main');
 
-//i'd like to remove these
-var TurnBasedRS = require('./TurnBasedRoomServer');
-var RelayRS = require('./RelayRoomServer');
+var connections = [];
 
-var connections = {};
+exports.getConnection = function(id)
+{
+    return connections.find(connection => connection.id === id);
+}
 
 exports.createConnection = function(socket)
 {
-    var connection = Connection.create(socket);
-    connections[connection._id] = connection;
+    var newConnection = new Connection(socket);
+
+    connections = connections.filter(connection => connection.id !== newConnection.id);
+    connections.push(newConnection);
+
+    return newConnection;
 }
 
-exports.removeConnection = function(socket)
+exports.removeConnection = function(connectionToRemove)
 {
-    var connectionId = socket.remoteAddress + ":" + socket.remotePort;
+    if (!connectionToRemove) return;
 
-    if (!connections.hasOwnProperty(connectionId)) return;
-    var connection = connections[connectionId];
-    delete connections[connectionId];
-    socket.destroy();
+    connections = connections.filter(connection => connection.id !== connectionToRemove.id);
+    if (connectionToRemove.socket)
+    {
+        connectionToRemove.socket.destroy();
+        connectionToRemove.socket = null;
+    }
 
-    logger.info("Removed connection: " + connectionId + ", stack: " + new Error().stack);
-    TurnBasedRS.onUserDisconnected(connection);
-    // RelayRS.onUserDisconnected(connection);
+    logger.info("Removed connection: " + connectionToRemove.id + ", stack: " + new Error().stack);
+
+    if (connectionToRemove.roomServer)
+    {
+        let member = connectionToRemove.roomServer.room.members.find(member => member.connection === connectionToRemove);
+        if (member)
+        {
+            member.connection = null;
+            connectionToRemove.roomServer.onMemberDisconnected(member);
+        }
+    }
 }

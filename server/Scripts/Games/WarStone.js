@@ -18,7 +18,7 @@ var https = require('https');
 var CARD_TYPE_SKIP_TURN = "SkipTurnSpell";
 var CARD_TYPE_BLOCK= "BarrierSpell";
 
-module.exports = class Game
+module.exports = class WarStone
 {
     constructor()
     {
@@ -473,7 +473,7 @@ module.exports = class Game
     onLeave(user)
     {
         var ret = this.serialize();
-        ret.close = user.profileId + " disconneted";
+        ret.close = user.name + " disconneted";
         return ret;
     }
 }
