@@ -14,4 +14,5 @@ COPY . /usr/src/app
 COPY ./Scripts /usr/src/app/Scripts
 
 EXPOSE 9306/tcp
-CMD [ "npm", "start" ]
+EXPOSE 9308/tcp
+CMD [ "node", "./Scripts/main.js" ]

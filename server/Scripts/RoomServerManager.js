@@ -10,7 +10,6 @@ exports.createRoomServer = function(room)
     switch (room.appId)
     {
         case "22819":
-            let TurnBasedRoomServer = require('./TurnBasedRoomServer.js');
             roomServer = new TurnBasedRoomServer(room, "WarStone");
             break;
         default:
