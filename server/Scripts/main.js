@@ -4,6 +4,7 @@ var log4js = require('log4js');
 var RoomServerManager = require('./RoomServerManager.js')
 var ConnectionManager = require('./ConnectionManager.js');
 const publicIp = require('public-ip');
+var S2S = require('./S2S.js');
 
 log4js.configure({
 	appenders: {
@@ -60,6 +61,19 @@ function readPOSTData(request, callback)
     });
 }
 
+function cancelRoom(roomId, msg)
+{
+    S2S.request({
+        service: "lobby",
+        operation: "SYS_ROOM_CANCELLED",
+        data: {
+            lobbyId: roomId,
+            msg: msg,
+            defailts: {}
+        }
+    });
+}
+
 function start()
 {
     app.get('/', (request, res) =>
@@ -72,11 +86,12 @@ function start()
         res.end();
     });
 
-    app.post('/bcrsm/room-assign', (request, res) => readPOSTData(request, data =>
+    app.post('/bcrsm/assign-room', (request, res) => readPOSTData(request, data =>
     {
         let room = JSON.parse(data);
     
-        if (!RoomServerManager.createRoomServer(room))
+        let roomServer = RoomServerManager.createRoomServer(room);
+        if (!roomServer)
         {
             res.writeHead(400, {'Content-Type': 'text/plain'});
             res.write(`bad request`);
@@ -85,16 +100,78 @@ function start()
         }
     
         res.writeHead(200, {'Content-Type': 'text/plain'});
-        res.write(`{"url":"${myPublicIp}","port":"${TCP_PORT}","roomId":"${room.id}"}`);
+        res.write(`{}`);
         res.end();
+
+        S2S.request({
+            service: "lobby",
+            operation: "SYS_ROOM_ASSIGNED",
+            data: {
+                lobbyId: room.id,
+                connectInfo: {
+                    roomId: room.id,
+                    url: myPublicIp,
+                    port: TCP_PORT
+                }
+            }
+        });
     }));
     
-    app.post('/bcrsm/room-launch', (request, res) => readPOSTData(request, data =>
+    app.post('/bcrsm/launch-room', (request, res) => readPOSTData(request, data =>
     {
+        let room = JSON.parse(data);
+
         res.writeHead(200, {'Content-Type': 'text/plain'});
         res.write('{}');
         res.end();
+
+        let roomServer = RoomServerManager.getRoomServer(room.id);
+
+        if (roomServer)
+        {
+            S2S.request({
+                service: "lobby",
+                operation: "SYS_ROOM_READY",
+                data: {
+                    lobbyId: room.id,
+                    connectInfo: {
+                        roomId: room.id,
+                        url: myPublicIp,
+                        port: TCP_PORT
+                    }
+                }
+            });
+        }
+        else
+        {
+            cancelRoom(room.id, "No roomServer found for roomId: " + room.id);
+        }
     }));
+
+    // app.post('/bcrsm/room-assign', (request, res) => readPOSTData(request, data =>
+    // {
+    //     let room = JSON.parse(data);
+    
+    //     let roomServer = RoomServerManager.createRoomServer(room);
+    //     if (!roomServer)
+    //     {
+    //         res.writeHead(400, {'Content-Type': 'text/plain'});
+    //         res.write(`bad request`);
+    //         res.end();
+    //         return;
+    //     }
+    
+    //     res.writeHead(200, {'Content-Type': 'text/plain'});
+    //     res.write(`{"roomId":${room.id},"url":${myPublicIp},"port":${TCP_PORT}}`);
+    //     res.end();
+    // }));
+    
+    // app.post('/bcrsm/launch-room', (request, res) => readPOSTData(request, data =>
+    // {
+    //     res.writeHead(200, {'Content-Type': 'text/plain'});
+    //     res.write('{}');
+    //     res.end();
+    // }));
     
     app.listen(HTTP_PORT);
     logger.info("HTTP server listning on port " + HTTP_PORT);
