@@ -1,11 +1,21 @@
-# README #
+# Room Server Manager #
 
-### What is this repository for? ###
-* RTT Room Server Manager and Room Servers
+This Room Server Manager (RSM) is also running it's RoomServers (RS) inside the same instance. It's been done this way for simplicity of the example.
 
-### How do I get set up? ###
-* Install NPM
-* Install VSCode
+The game this hosts is **War Stone**, another brainCloud RTT example.
+![](screenshots/warstone.png)
 
-### Contribution guidelines ###
-* Do good work
+New test games can be added to this RSM in RoomServerManager.js:
+
+```
+switch (room.appId)
+{
+    case "22819":
+        roomServer = new TurnBasedRoomServer(room, "WarStone");
+        break;
+    default:
+        return null;
+}
+```
+
+`TurnBasedRoomServer` is also re-usable for turn-based games.
