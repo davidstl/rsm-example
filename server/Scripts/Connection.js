@@ -1,7 +1,5 @@
 var ConnectionManager = require('./ConnectionManager.js');
 var RoomServerManager = require('./RoomServerManager.js');
-var log4js = require('log4js');
-var logger = log4js.getLogger('main');
 
 module.exports = class Connection
 {
@@ -35,18 +33,18 @@ module.exports = class Connection
         }
         catch (e)
         {
-            logger.error("Exception: " + e);
+            console.log("ERROR " + "Exception: " + e);
             ConnectionManager.removeConnection(this);
         }
     }
 
     onLine(line)
     {
-        logger.debug("Incoming | " + line);
+        console.log("Incoming | " + line);
         var message = JSON.parse(line);
         if (!message)
         {
-            logger.error("Bad json: " + message);
+            console.log("ERROR " + "Bad json: " + message);
             ConnectionManager.removeConnection(this);
             return;
         }
@@ -56,13 +54,13 @@ module.exports = class Connection
             let member = this.roomServer.room.members.find(member => member.connection == this);
             if (!member)
             {
-                logger.error("bad connection");
+                console.log("ERROR " + "bad connection");
                 ConnectionManager.removeConnection(this);
                 return;
             }
             if (!this.roomServer.onRecv(member, message))
             {
-                logger.error("bad message");
+                console.log("ERROR " + "bad message");
                 ConnectionManager.removeConnection(this);
                 return;
             }
@@ -73,7 +71,7 @@ module.exports = class Connection
             let roomServer = RoomServerManager.getRoomServer(message.lobbyId);
             if (!roomServer)
             {
-                logger.error("bad lobbyId");
+                console.log("ERROR " + "bad lobbyId");
                 ConnectionManager.removeConnection(this);
                 return;
             }
@@ -82,7 +80,7 @@ module.exports = class Connection
             let member = roomServer.room.members.find(member => member.profileId === message.profileId);
             if (!member)
             {
-                logger.error("bad profileId");
+                console.log("ERROR " + "bad profileId");
                 ConnectionManager.removeConnection(this);
                 return;
             }
@@ -94,7 +92,7 @@ module.exports = class Connection
         }
         else // Bad message, kick him
         {
-            logger.error("bad connection");
+            console.log("ERROR " + "bad connection");
             ConnectionManager.removeConnection(this);
             return;
         }
@@ -102,7 +100,7 @@ module.exports = class Connection
 
     onClose(message)
     {
-        logger.debug("Socket closing " + this.id);
+        console.log("Socket closing " + this.id);
         ConnectionManager.removeConnection(this);
     }
 
@@ -117,15 +115,15 @@ module.exports = class Connection
             }
             catch (e)
             {
-                logger.error("Exception: " + e);
+                console.log("ERROR " + "Exception: " + e);
             }
         }
-        logger.debug("Socket ending " + this.id);
+        console.log("Socket ending " + this.id);
     }
 
     onError(error)
     {
-        logger.debug("Socket error " + this.id + " | msg: " + error.message);
+        console.log("Socket error " + this.id + " | msg: " + error.message);
         ConnectionManager.removeConnection(this);
     }
 

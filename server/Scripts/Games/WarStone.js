@@ -144,7 +144,7 @@ module.exports = class WarStone
                     "scriptName": "getProperties"
                 }
             }, function(data) {
-                game._config = data
+                game._config = data.data.response
                 callback();
             });
         }
