@@ -1,4 +1,3 @@
-var log4js = require('log4js');
 let TurnBasedRoomServer = new require('./TurnBasedRoomServer.js');
 
 let roomServers = [];

@@ -1,6 +1,4 @@
 var Connection = require('./Connection.js');
-var log4js = require('log4js');
-var logger = log4js.getLogger('main');
 
 var connections = [];
 
@@ -30,7 +28,7 @@ exports.removeConnection = function(connectionToRemove)
         connectionToRemove.socket = null;
     }
 
-    logger.info("Removed connection: " + connectionToRemove.id + ", stack: " + new Error().stack);
+    console.log("Removed connection: " + connectionToRemove.id + ", stack: " + new Error().stack);
 
     if (connectionToRemove.roomServer)
     {

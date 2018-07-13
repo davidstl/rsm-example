@@ -1,22 +1,9 @@
 // Imports
 var net = require('net');
-var log4js = require('log4js');
 var RoomServerManager = require('./RoomServerManager.js')
 var ConnectionManager = require('./ConnectionManager.js');
 const publicIp = require('public-ip');
 var S2S = require('./S2S.js');
-
-log4js.configure({
-	appenders: {
-		out: {type: 'stdout', layout: {type: 'basic'}},
-		app: {type: 'file', layout: {type: 'basic'}, filename: '/log/rsm.log', maxLogSize: 10485760, backups: 5}
-	},
-	categories: {
-		default: {appenders: ['out', 'app'], level: 'debug'}
-	}
-});
-
-var logger = log4js.getLogger('main');
 
 // Constants
 var HTTP_PORT = 9306;
@@ -25,14 +12,13 @@ var TCP_PORT = 9308;
 // Create the HTTP listener
 var express = require('express');
 var app = express()
-var qs = require('querystring');
 
 var myPublicIp = "";
     
 publicIp.v4().then(ip =>
 {
     myPublicIp = ip;
-    logger.info("Public IP: " + myPublicIp);
+    console.log("Public IP: " + myPublicIp);
     start();
 });
 
@@ -54,8 +40,8 @@ function readPOSTData(request, callback)
 
     request.on('end', () =>
     {
-        logger.info("----------------------------------------------------\nHeaders: " + JSON.stringify(request.headers));
-        logger.info("POST: " + body);
+        console.log("----------------------------------------------------\nHeaders: " + JSON.stringify(request.headers));
+        console.log("POST: " + body);
 
         callback(body);
     });
@@ -78,9 +64,9 @@ function start()
 {
     app.get('/', (request, res) =>
     {
-        logger.info("----------------------------------------------------\nbad request"); 
+        console.log("----------------------------------------------------\nbad request"); 
         let query = require('url').parse(request.url, true).query;
-        logger.info("query: " + JSON.stringify(query));
+        console.log("query: " + JSON.stringify(query));
         res.writeHead(400, {'Content-Type': 'text/plain'});
         res.write('bad request');
         res.end();
@@ -174,29 +160,29 @@ function start()
     // }));
     
     app.listen(HTTP_PORT);
-    logger.info("HTTP server listning on port " + HTTP_PORT);
+    console.log("HTTP server listning on port " + HTTP_PORT);
     
     // Create our TCP server
     var server = net.createServer();
     server.listen(TCP_PORT);
-    logger.info("TCP server listning on port " + TCP_PORT);
+    console.log("TCP server listning on port " + TCP_PORT);
     
     // Receive connections
     server.on('connection', function(socket)
     {
         if (!socket)
         {
-            logger.error("connection with undefined socket!");
+            console.log("ERROR " + "connection with undefined socket!");
             return;
         }
         try
         {
-            logger.info("Received connection - " + socket.remoteAddress + ":" + socket.remotePort);
+            console.log("Received connection - " + socket.remoteAddress + ":" + socket.remotePort);
             ConnectionManager.createConnection(socket);
         }
         catch (e)
         {
-            logger.error("Exception: " + e);
+            console.log("ERROR " + "Exception: " + e);
         }
     });    
 }

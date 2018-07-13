@@ -1,8 +1,6 @@
 var RoomServer = require('./RoomServer.js');
 var ConnectionManager = require('./ConnectionManager.js');
 var RoomServerManager = require('./RoomServerManager.js');
-var log4js = require('log4js');
-var logger = log4js.getLogger('main');
 
 module.exports = class TurnBasedRoomServer extends RoomServer
 {
@@ -52,7 +50,7 @@ module.exports = class TurnBasedRoomServer extends RoomServer
                 this.handleGameState(gameState);
                 return true;
             default:
-                logger.error("Invalid op: " + message.op);
+                console.log("ERROR " + "Invalid op: " + message.op);
                 return false;
         }
     }
@@ -67,7 +65,7 @@ module.exports = class TurnBasedRoomServer extends RoomServer
         {
             if (gameState.close)
             {
-                logger.error("close requested: " + gameState.close);
+                console.log("ERROR " + "close requested: " + gameState.close);
             }
     
             // Looks like the game is finished!
