@@ -1,4 +1,5 @@
 var Connection = require('./Connection.js');
+var WSConnection = require('./WSConnection.js');
 
 var connections = [];
 
@@ -17,6 +18,16 @@ exports.createConnection = function(socket)
     return newConnection;
 }
 
+exports.createWSConnection = function(socket)
+{
+    var newConnection = new WSConnection(socket);
+
+    connections = connections.filter(connection => connection.id !== newConnection.id);
+    connections.push(newConnection);
+
+    return newConnection;
+}
+
 exports.removeConnection = function(connectionToRemove)
 {
     if (!connectionToRemove) return;
@@ -24,7 +35,10 @@ exports.removeConnection = function(connectionToRemove)
     connections = connections.filter(connection => connection.id !== connectionToRemove.id);
     if (connectionToRemove.socket)
     {
-        connectionToRemove.socket.destroy();
+        if (connectionToRemove.socket.destroy)
+        {
+            connectionToRemove.socket.destroy();
+        }
         connectionToRemove.socket = null;
     }
 
