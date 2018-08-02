@@ -1,12 +1,6 @@
 var ConnectionManager = require('./ConnectionManager.js');
 var RoomServerManager = require('./RoomServerManager.js');
 
-
-        // ws.on('message', function incoming(message)
-        // {
-        //     console.log('received: %s', message);
-        // });
-        // ws.send('something');
 module.exports = class WSConnection
 {
     constructor(socket)
