@@ -15,4 +15,5 @@ COPY ./Scripts /usr/src/app/Scripts
 
 EXPOSE 9306/tcp
 EXPOSE 9308/tcp
+EXPOSE 9310/tcp
 CMD [ "node", "./Scripts/main.js" ]

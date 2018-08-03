@@ -1,8 +1,8 @@
 var https = require('https');
 
-const APP_ID = ""; // FILL ME
-const SERVER_NAME = ""; // FILL ME
-const SERVER_SECRET = ""; // FILL ME
+const APP_ID = "22819"; // FILL ME
+const SERVER_NAME = "RSM"; // FILL ME
+const SERVER_SECRET = "b5f73f54-22b7-40d2-af89-657c270c40bb"; // FILL ME
 
 const SERVER_SESSION_EXPIRED = 40365;
 
