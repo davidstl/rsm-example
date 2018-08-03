@@ -18,7 +18,8 @@
     "net": "^1.0.2",
     "public-ip": "^2.4.0",
     "stream-frame": "0.0.6",
-    "uuid": "3.0.1"
+    "uuid": "3.0.1",
+    "ws": "^6.0.0"
   },
   "scripts": {
     "start": "node ./Scripts/main.js"

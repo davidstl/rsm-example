@@ -4,10 +4,12 @@ var RoomServerManager = require('./RoomServerManager.js')
 var ConnectionManager = require('./ConnectionManager.js');
 const publicIp = require('public-ip');
 var S2S = require('./S2S.js');
+const WebSocket = require('ws');
 
 // Constants
 var HTTP_PORT = 9306;
 var TCP_PORT = 9308;
+var WS_PORT = 9310;
 
 // Create the HTTP listener
 var express = require('express');
@@ -97,7 +99,8 @@ function start()
                 connectInfo: {
                     roomId: room.id,
                     url: myPublicIp,
-                    port: TCP_PORT
+                    port: TCP_PORT,
+                    wsPort: WS_PORT
                 }
             }
         });
@@ -123,7 +126,8 @@ function start()
                     connectInfo: {
                         roomId: room.id,
                         url: myPublicIp,
-                        port: TCP_PORT
+                        port: TCP_PORT,
+                        wsPort: WS_PORT
                     }
                 }
             });
@@ -184,5 +188,28 @@ function start()
         {
             console.log("ERROR " + "Exception: " + e);
         }
-    });    
+    });
+
+    // Create websocket server
+    const wsServer = new WebSocket.Server({port: WS_PORT});
+    console.log("WS server listning on port " + WS_PORT);
+    
+    // Receive connections
+    wsServer.on('connection', function connection(ws)
+    {
+        if (!ws)
+        {
+            console.log("ERROR " + "connection with undefined websocket!");
+            return;
+        }
+        try
+        {
+            let con = ConnectionManager.createWSConnection(ws);
+            console.log("Received connection - " + con.id);
+        }
+        catch (e)
+        {
+            console.log("ERROR " + "Exception: " + e);
+        }
+    });
 }
