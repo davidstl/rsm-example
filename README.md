@@ -80,9 +80,10 @@ We first need to create the application in the brainCloud portal, then upload co
 ```
   AppId in **Design / Core App Info / Application IDs**
 
-5. It's a nodejs project. You can start it by calling `node Scripts/main.js` via the cmdline:
+5. It's a nodejs project. It can be started by calling the following via the cmdline:
    ```
    cd server/
+   npm install
    node Scripts/main.js
    ```
 
