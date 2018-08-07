@@ -80,7 +80,7 @@ We first need to create the application in the brainCloud portal, then upload co
 ```
   AppId in **Design / Core App Info / Application IDs**
 
-5. It's a nodejs project. You can start it by calling 'node Scripts/main.js' via the cmdline:
+5. It's a nodejs project. You can start it by calling `node Scripts/main.js` via the cmdline:
    ```
    cd server/
    node Scripts/main.js
@@ -91,8 +91,8 @@ We first need to create the application in the brainCloud portal, then upload co
 
 2. In the file `src/App.js`, fill in the following in formation:
    ```
-   let appId = "..."
-   let appSecret = "..."
+   let appId = "..." // Fill in the appId
+   let appSecret = "..." // Fill in the appSecret
    ```
    Found in **Design / Core App Info / Application IDs**
 3. Install npm modules: `npm install`
