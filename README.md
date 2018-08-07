@@ -1,11 +1,11 @@
 # Room Server Manager #
 
-This Room Server Manager (RSM) is also running it's RoomServers (RS) inside the same instance. It's been done this way for simplicity of the example.
+This Room Server Manager (RSM) is also running it's RoomServers (RS) inside the same instance. We have done this for simplicity.
 
-The game this hosts is **War Stone**, another brainCloud RTT example.
+The game the system hosts is **War Stone**, another brainCloud RTT example.
 ![](screenshots/warstone.png)
 
-New test games can be added to this RSM in RoomServerManager.js:
+New test games can be added to the RSM example, in RoomServerManager.js:
 
 ```
 switch (room.appId)
