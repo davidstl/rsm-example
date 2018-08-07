@@ -19,7 +19,7 @@ function s2sRequest(json, callback)
     console.log("[S2S SEND] " + postData);
 
     var options = {
-        host: 'internal.braincloudservers.com',
+        host: 'sharedprod.braincloudservers.com',
         path: '/s2sdispatcher',
         method: 'POST',
         headers: {
