@@ -8,7 +8,7 @@ exports.createRoomServer = function(room)
 
     switch (room.appId)
     {
-        case "22819":
+        case "":   // FILL ME
             roomServer = new TurnBasedRoomServer(room, "WarStone");
             break;
         default:
