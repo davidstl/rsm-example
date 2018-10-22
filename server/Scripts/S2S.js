@@ -1,8 +1,32 @@
+/*
+
+# How to use
+- Fill in the APP_ID, SERVER_NAME and SERVER_SECRET
+- Import this module:
+  `var S2S = require('S2S')`
+- Send the request
+  `S2S.request(json, callback)`
+
+Example call to run a cloud script:
+```
+S2S.request({
+    "service": "script",
+    "operation": "RUN",
+    "data": {
+        "scriptName": "myScript"
+    }
+}, function(data) {
+    // check for data.status === 200
+});
+```
+
+*/
+
 var https = require('https');
 
-const APP_ID = "";  // Fill in the appId
-const SERVER_NAME = "RSM";
-const SERVER_SECRET = ""; // Fill in the server secret
+const APP_ID = ""; // FILL ME
+const SERVER_NAME = ""; // FILL ME
+const SERVER_SECRET = ""; // FILL ME
 
 const SERVER_SESSION_EXPIRED = 40365;
 
