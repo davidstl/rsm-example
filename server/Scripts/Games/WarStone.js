@@ -13,6 +13,7 @@
 //     "data": { ... }      // Game data to be represented on the client
 // }
 
+var brainclouds2s = require('brainclouds2s');
 var S2S = require('../S2S.js');
 
 var CARD_TYPE_SKIP_TURN = "SkipTurnSpell";
@@ -137,13 +138,13 @@ module.exports = class WarStone
         this.getConfig = function(callback)
         {
             var game = this;
-            S2S.request({
+            brainclouds2s.request(S2S.context, {
                 "service": "script",
                 "operation": "RUN",
                 "data": {
                     "scriptName": "getProperties"
                 }
-            }, function(data) {
+            }, function(context, data) {
                 game._config = data.data.response
                 callback();
             });

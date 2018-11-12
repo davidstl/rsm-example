@@ -3,6 +3,7 @@ var net = require('net');
 var RoomServerManager = require('./RoomServerManager.js')
 var ConnectionManager = require('./ConnectionManager.js');
 const publicIp = require('public-ip');
+var brainclouds2s = require('brainclouds2s');
 var S2S = require('./S2S.js');
 const WebSocket = require('ws');
 
@@ -10,6 +11,10 @@ const WebSocket = require('ws');
 var HTTP_PORT = 9306;
 var TCP_PORT = 9308;
 var WS_PORT = 9310;
+
+// Init braincloud S2S
+S2S.context = brainclouds2s.init("", "", "", null);
+brainclouds2s.setLogEnabled(S2S.context, true);
 
 // Create the HTTP listener
 var express = require('express');
@@ -51,7 +56,7 @@ function readPOSTData(request, callback)
 
 function cancelRoom(roomId, msg)
 {
-    S2S.request({
+    brainclouds2s.request(S2S.context, {
         service: "lobby",
         operation: "SYS_ROOM_CANCELLED",
         data: {
@@ -91,7 +96,7 @@ function start()
         res.write(`{}`);
         res.end();
 
-        S2S.request({
+        brainclouds2s.request(S2S.context, {
             service: "lobby",
             operation: "SYS_ROOM_ASSIGNED",
             data: {
@@ -118,7 +123,7 @@ function start()
 
         if (roomServer)
         {
-            S2S.request({
+            brainclouds2s.request(S2S.context, {
                 service: "lobby",
                 operation: "SYS_ROOM_READY",
                 data: {
